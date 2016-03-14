@@ -71,14 +71,12 @@ struct wf_register *_reg_init(unsigned int n_wrts, unsigned int n_rdrs, unsigned
         abort();
 	}	
 	/* if the register is static, the memory is preallocated */
-	if(size != 0){
-		for(i = 0; i < n_rdrs + 2; i++){
-			if((reg->rw_space[i].value_loc = malloc(size))==NULL){
-				printf("malloc failed\n");
-				abort();
-			}
-			reg->rw_space[i].size = size;
+	for(i = 0; i < n_rdrs + 2; i++){
+		if((reg->rw_space[i].value_loc = malloc(size))==NULL){
+			printf("malloc failed\n");
+			abort();
 		}
+		reg->rw_space[i].size = size;
 	}	
 	/* allocate space for the bitmap */		
 	if((reg->current_reader = calloc(1, (reg->readers) / sizeof(char) + 1)) == NULL){
@@ -172,24 +170,23 @@ struct writer_slot *writer_init(struct wf_register *reg){
 * @date 10/03/2016
 */
 void *_reg_write(struct writer_slot *wr_slt, void *val, unsigned int size){
-	unsigned int tmp_size;
+	unsigned int size_slot;
 	unsigned long long current_tmp, current_index, i;
 	struct wf_register * reg;
 	
 	reg = wr_slt->parent;
 	
-	current_index = reg->current >> NRRD_LENG;
-	i = (current_index + 1) % (reg->readers + 2);
-	/* search a free slot to use staring from the last one*/
+	current_index = i = reg->current >> NRRD_LENG;
+	/* search a free slot to use starting from the last one*/
 	while(1){
+		i = (i + 1) % (reg->readers + 2); 
 		if((reg->rw_space[i].r_started == reg->rw_space[i].r_endend) && (current_index != i)){
 			break;
 		}
-		i = (i + 1) % (reg->readers + 2); 
-	}
-	tmp_size = reg->size_slot;		
+	}	
 	/* allocate memory for the new buffer. It is possible also to reuse memory but also for fixed size and this can produce memory unefficiency */
-	if(tmp_size==0 && reg->rw_space[i].size != size){
+	size_slot = reg->size_slot; 
+	if(size_slot==0 && reg->rw_space[i].size != size){
 		free(reg->rw_space[i].value_loc);
 		if((reg->rw_space[i].value_loc = malloc(size))==NULL){
 			printf("malloc failed\n");
@@ -197,14 +194,13 @@ void *_reg_write(struct writer_slot *wr_slt, void *val, unsigned int size){
 		}
 	}
 	/* copy the value in the register and update the size*/	
-	reg->rw_space[i].size = tmp_size = (tmp_size > 0 ? tmp_size:size);
-	memcpy(reg->rw_space[i].value_loc, val, tmp_size);
+	reg->rw_space[i].size = (size_slot > 0 ? size_slot:size);
+	memcpy(reg->rw_space[i].value_loc, val, reg->rw_space[i].size);
 	reg->rw_space[i].r_started = reg->rw_space[i].r_endend = 0;
 	
 	/* prepare the new current and bitmap and swap it with the old ones*/
-	current_tmp = i << NRRD_LENG;
 	memset(wr_slt->old_bitmap, 0, ((reg->readers) / sizeof(char) + 1) );
-	current_tmp = __sync_lock_test_and_set(&reg->current, current_tmp);
+	current_tmp = __sync_lock_test_and_set(&reg->current, i << NRRD_LENG);
 	wr_slt->old_bitmap = __sync_lock_test_and_set(&reg->current_reader, wr_slt->old_bitmap); // <- NON SONO SICURO SIA CORRETTO COSI: io voglio swappare degli indirizzi
 	
 	/* update the r_started field in the old slot or free the memory used */
@@ -254,8 +250,7 @@ void *reg_read(struct reader_slot *rd_slt){
 	/* read from the memory location */
 	mem_loc = reg->rw_space[index].value_loc;
 	memcpy(rd_slt->value_loc, mem_loc, size);
-	rd_slt->size = size;
-	
+		
 	/* update the bitmap */
 	char * bm = reg->current_reader;
 	__sync_fetch_and_or(&(bm[me/8]),(1 << me % 8)); //qui sono sicuro che sono l'unico a lavorare su quel bit
@@ -282,6 +277,18 @@ unsigned int get_size(struct reader_slot *rd_slt){
 }
 
 /**
+* get the id of the current reader or writer
+*
+* @author Mauro Ianni
+* @param the pointer to the reader or writer register slot
+* @return the id of the register as an unsigne int
+* @date 11/03/2016
+*/
+unsigned int get_id(void *slot){
+	return ((struct reader_slot *) slot)->id;
+}
+
+/**
 * Free the memory used by the register
 *
 * @author Mauro Ianni
@@ -293,5 +300,6 @@ void reg_free(struct wf_register *reg){
 	free(reg->rw_space);
 	free(reg);
 }
+
 
 

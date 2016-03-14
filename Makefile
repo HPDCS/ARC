@@ -1,13 +1,12 @@
 CC=gcc
 FLAGS=-g -Wall -pthread -lm
 #INCLUDE= -I include/ -I mm/ -I core/ -Istatistics/
-#LIBS=-pthread -lm
 EXECUTABLE=test
 
 all: test
 
 test: main.o register.o
-	$(CC) $(FLAGS) register.o main.o -o test
+	$(CC) $(FLAGS) register.o main.o -o $(EXECUTABLE)
 	
 main.o : main.c
 	$(CC) $(FLAGS) main.c -o main.o -c

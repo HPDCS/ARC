@@ -29,5 +29,7 @@ extern void *_reg_write(struct writer_slot *wr_slt, void *value, unsigned int si
 extern void *reg_read(struct reader_slot *rd_slt);
 
 extern unsigned int get_size(struct reader_slot *rd_slt);
+extern unsigned int get_id(void *slot);
 
 extern void reg_free(struct wf_register *reg);
+

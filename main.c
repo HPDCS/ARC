@@ -12,8 +12,10 @@
 
 #include "register.h"
 
+#define DIM 1
+
 struct wf_register *reg;
-unsigned long long val;
+unsigned long long val = 1;
 bool end = false;
 
 void printBits(size_t const size, void const * const ptr)
@@ -35,22 +37,22 @@ void printBits(size_t const size, void const * const ptr)
 }
 
 void *run_write(void *args){
-	//unsigned long long val;
-	unsigned long long *ll;
-	char arr[256];
-	unsigned int i;
+	unsigned long long arr[DIM];
+	unsigned int i, size, id;
 	struct writer_slot *wr_slt;
 	wr_slt = writer_init(reg);
+	size=DIM*sizeof(unsigned long long);
+	id = get_id(wr_slt);
 	
-	printf("WR: START\n");
+	printf("[%u]WR: START\n", id);
 	
-	val=0;
-
 	for( i = 0; i < 40000000 ; i++){
-		//ll=reg_write(wr_slt, &val, 8); 		
-		ll=reg_write(wr_slt, arr, 256); 		
+		
+		arr[0] = ++val;
+		
+		//reg_write(wr_slt, &val, size); 		
+		reg_write(wr_slt, arr, size); 		
 
-		val += 1;//(unsigned long long) (random() * 2);
 		if((i%10000000) == 0) printf("WR: Iteration %10u\n",i);
 	}
 	end = true;
@@ -61,26 +63,29 @@ void *run_write(void *args){
 }
 
 void *run_read(void *args){
-	unsigned long long *ll, old=0, i=0;
+	unsigned long long *ll, old=0, i=0, val1, val2;
 	struct reader_slot *rd_slt; 
-	//unsigned int size;
+	unsigned int id;
 	rd_slt= reader_init(reg);
-	printf("RD: START\n");
+	id = get_id(rd_slt);
+	printf("[%u]RD: START\n", id);
 	
 	sleep(1);
 
 	while(!end){
 		i++;
+		val1=val;
 		ll=reg_read(rd_slt);
-		/*if(*ll!=0 && *ll < old){
-			printf("val=%llu letto=%llu\n", old, *ll);
+		val2=val;
+		if(ll[0] < val1-1 || ll[0] > val2){
+			printf("[%u]RD: val1=%llu letto=%llu val1=%llu\n", id, val1, ll[0], val2);
 		}
 		
-		old= (*ll);
-		if((i%10000000) == 0) printf("RD: Iteration %10llu\n",i);
-		* */
+		old= ll[0];
+		if((i%10000000) == 0) printf("[%u]RD: Iteration %10llu\n",id,i);
+		
 	}
-	printf("RD: %llu read operations performed\n", i);
+	printf("[%u]RD: %llu read operations performed\n", id,i);
 	
 	pthread_exit(NULL);
 
@@ -99,7 +104,7 @@ int main(int argn, char *argv[]) {
     readers = atoi(argv[2]);
     pthread_t p_tid[writers + readers];    
 	reg = reg_init(writers, readers);
-	//reg = reg_init(writers, readers, sizeof(unsigned long long));
+	//reg = reg_init(writers, readers, DIM*sizeof(unsigned long long));
     
     printf("Start test on Register(%u,%u):\n", writers, readers);
 

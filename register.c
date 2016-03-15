@@ -41,8 +41,6 @@ struct writer_slot{
 	char *old_bitmap;					// personal copy of the bitmap
 };
 
-void *_reg_write(struct writer_slot *reg, void *value, unsigned int size);
-
 /**
 * Init the register allocating the needed amount of memory and calculate the base for the current value.
 *
@@ -85,7 +83,7 @@ struct wf_register *_reg_init(unsigned int n_wrts, unsigned int n_rdrs, unsigned
 	}
 	/* At the begin the register is setted to zero */
 	if(size > 0)
-		memset(reg->rw_space[i].value_loc, 0, size);
+		memset(reg->rw_space[0].value_loc, 0, size);
 	
 	return reg;
 }	

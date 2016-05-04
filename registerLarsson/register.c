@@ -6,9 +6,9 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
-#define NRDR_MASK 0X00000000ffffffff	// mask of the reader counter
-#define PTRFIELDLEN 6
-#define PTRFIELD 0X000000000000003f
+#define NRDR_MASK 0X00000000ffffffffLL	// mask of the reader counter
+#define PTRFIELDLEN 6LL
+#define PTRFIELD 0X000000000000003fLL
 
 
 struct register_slot {
@@ -50,6 +50,7 @@ struct wf_register *_reg_init(unsigned int n_wrts, unsigned int n_rdrs, unsigned
 	reg->writers = n_wrts;	
 	reg->size_slot = size;		
 	reg->current = 0;
+	reg->readers_registered = 0;
 	
 	if((reg -> rw_space = calloc(reg->readers+2, sizeof(struct register_slot)))==NULL){
 		printf("malloc failed\n");
@@ -64,6 +65,7 @@ struct wf_register *_reg_init(unsigned int n_wrts, unsigned int n_rdrs, unsigned
 	/* if the register is static, the memory is preallocated */
 	if(size != 0){
 		for(i = 0; i < n_rdrs+2; i++){
+			reg->rw_space[i].size = size;
 			if((reg->rw_space[i].value_loc = malloc(size))==NULL){
 				printf("malloc failed\n");
 				abort();
@@ -72,7 +74,7 @@ struct wf_register *_reg_init(unsigned int n_wrts, unsigned int n_rdrs, unsigned
 	}
 	/* if the register is dynamic */
 	
-	_reg_write(reg, &reg->current, 8);/*
+	/*_reg_write(reg, &reg->current, 8);
 	else{
 		for(i = 0; i < n_rdrs+2; i++){
 			reg->rw_space[i].value_loc = NULL;
@@ -92,11 +94,11 @@ unsigned int reader_init(struct wf_register *reg){
 }
 
 void *_reg_write(struct wf_register *reg, void *val, unsigned int size){
-	unsigned int tmp_size, tr;
+	unsigned int tmp_size, tr, size_slot;
 	unsigned long long current_index, i, j, wsync, oldwptr;
 	
 	current_index = reg->current & PTRFIELD;
-	i = (current_index + 1) % (reg->readers + 2);
+	i = 0;//(current_index + 1) % (reg->readers + 2);
 	
 	while(1){
 		if(current_index != i){
@@ -109,9 +111,19 @@ void *_reg_write(struct wf_register *reg, void *val, unsigned int size){
 		i++;
 		i = i % (reg->readers + 2); 
 	}
+	/* allocate memory for the new buffer. It is possible also to reuse memory but also for fixed size and this can produce memory unefficiency */
+	size_slot = reg->size_slot; 
+	if(size_slot==0 && reg->rw_space[i].size != size){
+		free(reg->rw_space[i].value_loc);
+		if((reg->rw_space[i].value_loc = malloc(size))==NULL){
+			printf("malloc failed\n");
+			abort();
+		}
+	}
 	
-
 	tmp_size = reg->rw_space[i].size;
+	tmp_size = (size_slot > 0 ? size_slot:size);
+	//printf("%u\n",tmp_size);
 	memcpy(reg->rw_space[i].value_loc, val, tmp_size);
 	
 	wsync = __sync_lock_test_and_set(&reg->current, i);
@@ -134,24 +146,25 @@ void *_reg_write(struct wf_register *reg, void *val, unsigned int size){
 * @return the pointer to a memory location with a copy of the current value
 * @date 24/02/2016
 */
-void *reg_read(struct wf_register *reg, unsigned int id){
-	unsigned long long readerbit, rsync, rptr;
+void *reg_read(struct wf_register *reg, unsigned int id, unsigned int *size){
+	unsigned long long readerbit, rsync, rptr, id_abs;
 	void *mem_loc, *mem_ret;
 	
-	
-	readerbit = 1 << (id + PTRFIELDLEN);
+	id_abs = (id + PTRFIELDLEN);
+	readerbit = 1LL << id_abs;
 	rsync = __sync_fetch_and_or(&reg->current, readerbit);
 	rptr = rsync & PTRFIELD;
-	
+	/*
 	if((mem_ret = malloc(reg->size_slot))==NULL){
 		printf("malloc failed\n");
         abort();
 	}
 	/* read from the memory location */
 	mem_loc = reg->rw_space[rptr].value_loc;
+	/*
 	memcpy(mem_ret, mem_loc, reg->rw_space[rptr].size);
-	
-	return mem_ret;
+	*/
+	return mem_loc;//mem_ret;
 }
 
 /**

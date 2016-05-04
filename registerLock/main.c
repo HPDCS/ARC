@@ -12,9 +12,9 @@
 
 #include "register.h"
 
-struct wf_register *reg;
+struct register_slot *reg;
 unsigned long long val = 1;
-unsigned int busy_write=0, busy_read=0, end_write=0, end_read=0, size=0, count_write=0, duration=0, load=0;
+unsigned int busy_write=0, busy_read=0, end_write=0, end_read=0, size=0, count_write=0, duration=0, load=0, rd_id=0;
 unsigned int *count_read;
 bool end = false, start = false;
 
@@ -69,13 +69,13 @@ void * run_write(void *args){
 	}
 	//printf("[0]WR: END\n");
 	
-	pthread_exit(NULL);
+	pthread_exit(NULL);	
 }
 
 void * run_read(void *args){
 	unsigned int k,j, id, size=0, *ll;
 	unsigned int arr[size/4];
-	id = reader_init(reg);
+	id = __sync_fetch_and_add(&rd_id, 1);
 	//printf("[%u]RD: START\n", id);
 	
 	//sleep(1);
@@ -84,7 +84,7 @@ void * run_read(void *args){
 
 	while(!end || (end_read!=0 && count_read[id] >= end_read)){
 		//read
-		ll=reg_read(reg, id, &size);
+		ll=reg_read(reg);
 		//carico
 		if(load>0){
 			for(j=0; j<size/4; j++) 
@@ -99,7 +99,6 @@ void * run_read(void *args){
 	//printf("[%u]RD: %u read operations performed\n", id,count_read[id]);
 	
 	pthread_exit(NULL);
-
 }
 
 int main(int argn, char *argv[]) {
@@ -153,7 +152,7 @@ int main(int argn, char *argv[]) {
     
 	sleep(1);
 	printf("\n\n+-----------------------------------------------------------------------------------+\n");
-	printf("START TEST on REGISTER(%u,%u) of size %u:                                              +\n\n", writers, readers, size);
+	printf("START TEST on REGISTER(%u,%u) of size %u:\n\n", writers, readers, size);
 
 	timer_start(exec_time);
 	start = true;

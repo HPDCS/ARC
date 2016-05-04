@@ -1,0 +1,54 @@
+#!/bin/bash
+# Author: Mauro Ianni
+# Description: ....................
+
+# 22/09/2015 - First writing
+
+# no parameters expected
+
+# script name
+ScNm="$(echo $0|sed "s/.*\///")"
+
+# set output file name (with day)
+ofn="./log_files/${ScNm}_$(date +%Y%m%d).log"
+
+
+RD_list="1 3 7 15 31"
+SZ_list="4096 8192 16384 32768 65536 131072"
+LD_list="0 1"
+
+for LD in $LD_list
+do
+	for SZ in $SZ_list
+	do 
+		for RD in $RD_list
+		do 
+			./registerHPDCS/test 1 $RD $SZ 0 0 1 $LD>> ./results/HPDCS_LD=${LD}.dat
+  		done
+	done
+done
+
+
+for RD in $RD_list
+do
+	for SZ in $SZ_list
+	do 
+		for LD in $LD_list
+		do 
+			./registerLarsson/test 1 $RD $SZ 0 0 1 $LD>> ./results/LARSSON_LD=${LD}.dat
+  		done
+	done
+done
+
+
+for RD in $RD_list
+do
+	for SZ in $SZ_list
+	do 
+		for LD in $LD_list
+		do 
+			./registerLock/test 1 $RD $SZ 0 0 1 $LD>> ./results/LOCK_LD=${LD}.dat
+  		done
+	done
+done
+

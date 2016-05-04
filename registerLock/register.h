@@ -16,12 +16,10 @@
 #define reg_write3(r,v,s) _reg_write(r,v,s)
 #define reg_write2(r,v) _reg_write(r,v,0)
 
-struct wf_register;
+struct register_slot;
 
 
-extern struct wf_register *_reg_init(unsigned int n_wrts, unsigned int reader, unsigned int size);
-extern void *_reg_write(struct wf_register *reg, void *value, unsigned int size);
-extern void *reg_read(struct wf_register *reg, unsigned int id,unsigned int *size);
-extern void reg_free(struct wf_register *reg);
-
-extern unsigned int reader_init(struct wf_register *reg);
+extern struct register_slot *_reg_init(unsigned int n_wrts, unsigned int reader, unsigned int size);
+extern void *_reg_write(struct register_slot *reg, void *value, unsigned int size);
+extern void *reg_read(struct register_slot *reg);
+extern void reg_free(struct register_slot *reg);

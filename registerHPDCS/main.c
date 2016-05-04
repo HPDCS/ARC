@@ -12,11 +12,13 @@
 
 #include "register.h"
 
+#define DIM 1
+
 struct wf_register *reg;
 unsigned long long val = 1;
-unsigned int busy_write=0, busy_read=0, end_write=0, end_read=0, size=0, count_write=0, duration=0, load=0;
+unsigned int busy_write=0, busy_read=0,  end_write=0, end_read=0, size=0, count_write=0, duration=0, rd_id = 0, load = 0;
 unsigned int *count_read;
-bool end = false, start = false;
+bool start = false, end = false;
 
 void printBits(size_t const size, void const * const ptr)
 {
@@ -44,12 +46,15 @@ int busy_loop(unsigned int count){
 	return k;
 }
 
-void * run_write(void *args){
+void *run_write(void *args){
 	unsigned int arr[size/4];
-	unsigned int j=0, k;
+	unsigned int j=0, k, id;
 	struct writer_slot *wr_slt;
 	
-	//printf("[0]WR: START\n");
+	wr_slt = writer_init(reg);
+	id = 0;
+	
+	//printf("[%u]WR: START\n", id);
 	
 	while(!start);
 	
@@ -60,31 +65,36 @@ void * run_write(void *args){
 				arr[j]++;
 		}
 		//write		
-		reg_write(reg, arr, size);
+		reg_write(wr_slt, arr);
 		//busy loops
 		k = busy_loop(busy_write);
 		
 		count_write++;
-		//if((count_write%(end_write/10)) == 0) printf("WR: Iteration %10u\n",count_write);
+		//if(count_write%5000000 == 0) printf("WR: Iteration %10u\n",count_write);
 	}
+	
+	//end = true;
 	//printf("[0]WR: END\n");
 	
 	pthread_exit(NULL);
+
 }
 
-void * run_read(void *args){
-	unsigned int k,j, id, size=0, *ll;
+void *run_read(void *args){
+	unsigned int k,j, id, *ll;
+	struct reader_slot *rd_slt;
 	unsigned int arr[size/4];
-	id = reader_init(reg);
+	
+	rd_slt= reader_init(reg);
+	id = __sync_fetch_and_add(&rd_id, 1);
 	//printf("[%u]RD: START\n", id);
 	
 	//sleep(1);
-
-	//while(!start);
+	while(!start);
 
 	while(!end || (end_read!=0 && count_read[id] >= end_read)){
 		//read
-		ll=reg_read(reg, id, &size);
+		ll=reg_read(rd_slt);
 		//carico
 		if(load>0){
 			for(j=0; j<size/4; j++) 
@@ -95,6 +105,7 @@ void * run_read(void *args){
 		
 		count_read[id]++;
 		//if((count_read[id]%(end_read/5)) == 0) printf("[%u]RD: Iteration %10u\n",id,count_read[id]);
+
 	}
 	//printf("[%u]RD: %u read operations performed\n", id,count_read[id]);
 	
@@ -103,7 +114,7 @@ void * run_read(void *args){
 }
 
 int main(int argn, char *argv[]) {
-	unsigned int i, ret, readers, writers, tot_count_read=0;
+	unsigned int i, ret, readers, writers, tot_count_read = 0;
     timer exec_time;
 
     if(argn < 8) {
@@ -128,12 +139,12 @@ int main(int argn, char *argv[]) {
 		end_read = atoi(argv[7]);
 		load = atoi(argv[8]);
 	}
-
+    
     pthread_t p_tid[writers + readers];    
 	reg = reg_init(writers, readers, size);
-	//reg = reg_init(writers, readers, sizeof(unsigned long long));
-    
-    if((count_read = calloc(readers, sizeof(unsigned int))) == NULL){
+	//reg = reg_init(writers, readers, DIM*sizeof(unsigned long long));
+	
+	if((count_read = calloc(readers, sizeof(unsigned int))) == NULL){
 		printf("malloc failed\n");
 		abort();
 	}
@@ -150,11 +161,13 @@ int main(int argn, char *argv[]) {
             abort();
         }
     }
-    
-	sleep(1);
-	printf("\n\n+-----------------------------------------------------------------------------------+\n");
-	printf("START TEST on REGISTER(%u,%u) of size %u:                                              +\n\n", writers, readers, size);
 
+	sleep(1);
+	printf("\n\n+===================================================================================O\n");
+	printf("+===================================================================================O\n");
+	printf(" START TEST on REGISTER(%u,%u) of size %u:\n\n", writers, readers, size);
+	
+	
 	timer_start(exec_time);
 	start = true;
 	if(duration > 0){
@@ -166,12 +179,13 @@ int main(int argn, char *argv[]) {
 		pthread_join(p_tid[i], NULL);
 	}
 
-	printf("TEST ENDED: %.5f seconds\n", (double)timer_value_seconds(exec_time));
-	printf("TOTAL WRTE: %u\n", count_write);
+	printf(" TEST ENDED: %.5f seconds\n", (double)timer_value_seconds(exec_time));
+	printf(" TOTAL WRTE: %u\n", count_write);
 	for(i = 0; i < readers; i++)  tot_count_read +=count_read[i];
-	printf("TOTAL READ: %u\n", tot_count_read);
-	printf("TOTAL OPER: %u\n", tot_count_read+count_write);
-	printf("+-----------------------------------------------------------------------------------+\n\n\n");
+	printf(" TOTAL READ: %u\n", tot_count_read);
+	printf(" TOTAL OPER: %u\n", tot_count_read+count_write);
+	printf("+===================================================================================O\n");
+	printf("+===================================================================================O\n\n\n");
 	
-    reg_free(reg);
+	reg_free(reg);
 }

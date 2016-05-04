@@ -17,11 +17,20 @@
 #define reg_write2(r,v) _reg_write(r,v,0)
 
 struct wf_register;
+struct reader_slot;
+struct writer_slot;
 
+extern void print_snapshot(struct wf_register *reg);
 
 extern struct wf_register *_reg_init(unsigned int n_wrts, unsigned int reader, unsigned int size);
-extern void *_reg_write(struct wf_register *reg, void *value, unsigned int size);
-extern void *reg_read(struct wf_register *reg, unsigned int id,unsigned int *size);
+
+extern struct reader_slot *reader_init(struct wf_register *reg);
+extern struct writer_slot *writer_init(struct wf_register *reg);
+
+extern void *_reg_write(struct writer_slot *wr_slt, void *value, unsigned int size);
+extern void *reg_read(struct reader_slot *rd_slt);
+
+extern unsigned int get_size(struct reader_slot *rd_slt);
+
 extern void reg_free(struct wf_register *reg);
 
-extern unsigned int reader_init(struct wf_register *reg);

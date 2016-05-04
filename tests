@@ -17,6 +17,11 @@ RD_list="1 3 7 15 31"
 SZ_list="4096 8192 16384 32768 65536 131072"
 LD_list="0 1"
 
+cd registerHPDCS
+make clean
+make
+cd ..
+
 for LD in $LD_list
 do
 	for SZ in $SZ_list
@@ -28,6 +33,10 @@ do
 	done
 done
 
+cd registerLarsson
+make clean
+make
+cd ..
 
 for RD in $RD_list
 do
@@ -40,6 +49,10 @@ do
 	done
 done
 
+cd registerLock
+make clean
+make
+cd ..
 
 for RD in $RD_list
 do

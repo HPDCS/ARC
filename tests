@@ -13,7 +13,7 @@ ScNm="$(echo $0|sed "s/.*\///")"
 ofn="./log_files/${ScNm}_$(date +%Y%m%d).log"
 
 
-RD_list="1 3 7 15 31"
+RD_list="1 2 3 7 15 23 31"
 SZ_list="4096 8192 16384 32768 65536 131072"
 LD_list="0 1"
 
@@ -21,6 +21,8 @@ cd registerHPDCS
 make clean
 make
 cd ..
+
+echo "starting test on registerHPDCS"
 
 for LD in $LD_list
 do
@@ -38,6 +40,8 @@ make clean
 make
 cd ..
 
+echo "starting test on registerLarsson"
+
 for RD in $RD_list
 do
 	for SZ in $SZ_list
@@ -49,10 +53,30 @@ do
 	done
 done
 
+cd registerPeterson
+make clean
+make
+cd ..
+
+echo "starting test on registerPeterson"
+
+for RD in $RD_list
+do
+	for SZ in $SZ_list
+	do 
+		for LD in $LD_list
+		do 
+			./registerPeterson/test 1 $RD $SZ 0 0 1 $LD>> ./results/PETERSON_LD=${LD}.dat
+  		done
+	done
+done
+
 cd registerLock
 make clean
 make
 cd ..
+
+echo "starting test on registerLock"
 
 for RD in $RD_list
 do

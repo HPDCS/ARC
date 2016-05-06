@@ -152,7 +152,7 @@ int main(int argn, char *argv[]) {
     
 	sleep(1);
 	printf("\n\n+-----------------------------------------------------------------------------------+\n");
-	printf("START TEST on REGISTER(%u,%u) of size %u:\n\n", writers, readers, size);
+	printf("START TEST on REGISTER(%u,%u) of size %u for %u seconds:\n\n", writers, readers, size, duration);
 
 	timer_start(exec_time);
 	start = true;
@@ -165,7 +165,6 @@ int main(int argn, char *argv[]) {
 		pthread_join(p_tid[i], NULL);
 	}
 
-	printf("TEST ENDED: %.5f seconds\n", (double)timer_value_seconds(exec_time));
 	printf("TOTAL WRTE: %u\n", count_write);
 	for(i = 0; i < readers; i++)  tot_count_read +=count_read[i];
 	printf("TOTAL READ: %u\n", tot_count_read);

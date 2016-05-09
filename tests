@@ -30,7 +30,7 @@ do
 	do 
 		for RD in $RD_list
 		do 
-			./registerHPDCS/test 1 $RD $SZ 0 0 1 $LD>> ./results/HPDCS_LD=${LD}.dat
+			./registerHPDCS/test 1 $RD $SZ 0 0 10 $LD>> ./results/HPDCS_LD=${LD}.dat
   		done
 	done
 done
@@ -42,13 +42,13 @@ cd ..
 
 echo "starting test on registerLarsson"
 
-for RD in $RD_list
+for LD in $LD_list
 do
 	for SZ in $SZ_list
 	do 
-		for LD in $LD_list
+		for RD in $RD_list
 		do 
-			./registerLarsson/test 1 $RD $SZ 0 0 1 $LD>> ./results/LARSSON_LD=${LD}.dat
+			./registerLarsson/test 1 $RD $SZ 0 0 10 $LD>> ./results/LARSSON_LD=${LD}.dat
   		done
 	done
 done
@@ -60,13 +60,13 @@ cd ..
 
 echo "starting test on registerPeterson"
 
-for RD in $RD_list
+for LD in $LD_list
 do
 	for SZ in $SZ_list
 	do 
-		for LD in $LD_list
+		for RD in $RD_list
 		do 
-			./registerPeterson/test 1 $RD $SZ 0 0 1 $LD>> ./results/PETERSON_LD=${LD}.dat
+			./registerPeterson/test 1 $RD $SZ 0 0 10 $LD>> ./results/PETERSON_LD=${LD}.dat
   		done
 	done
 done
@@ -78,13 +78,13 @@ cd ..
 
 echo "starting test on registerLock"
 
-for RD in $RD_list
+for LD in $LD_list
 do
 	for SZ in $SZ_list
 	do 
-		for LD in $LD_list
+		for RD in $RD_list
 		do 
-			./registerLock/test 1 $RD $SZ 0 0 1 $LD>> ./results/LOCK_LD=${LD}.dat
+			./registerLock/test 1 $RD $SZ 0 0 10 $LD>> ./results/LOCK_LD=${LD}.dat
   		done
 	done
 done

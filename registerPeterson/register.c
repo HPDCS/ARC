@@ -15,8 +15,8 @@ struct wf_register {
 	void **copybuff;	// curcular buffer of register slot to use for the current value
 	void *BUFF1;
 	void *BUFF2;
-	void **buf1_loc;	// curcular buffer of register slot to use for the current value
-	void **buf2_loc;	// curcular buffer of register slot to use for the current value
+	void **buf1_loc;	
+	void **buf2_loc;	
 	
 	unsigned int size_slot;			// size of the register. Only for fixed size
 	unsigned int writers;			// max number of concurrent writers, fixed in the init
@@ -116,10 +116,6 @@ void *_reg_write(struct wf_register *reg, void *val, unsigned int size){
 
 void *reg_read(struct wf_register *reg, unsigned int id, unsigned int *size){
 	bool flag1, sw1, flag2, sw2;
-	//void *buf1, *buf2;
-	
-	//buf1=malloc(reg->size_slot);
-	//buf2=malloc(reg->size_slot);
 	
 	reg->reading[id]= (!reg->writing[id]);
 	
@@ -131,16 +127,12 @@ void *reg_read(struct wf_register *reg, unsigned int id, unsigned int *size){
 	memcpy(reg->buf2_loc[id], reg->BUFF2, reg->size_slot);
 	
 	if(reg->reading[id] == reg->writing[id]){
-		//free(buf1);
-		//free(buf2);
 		return reg->copybuff[id];
 	}
 	else if((sw1 != sw2) || flag1 || flag2){
-		//free(buf1);
 		return reg->buf2_loc[id];
 	}
 	else{
-		//free(buf2);
 		return reg->buf1_loc[id];
 	}
 }

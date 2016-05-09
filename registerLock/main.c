@@ -73,7 +73,7 @@ void * run_write(void *args){
 }
 
 void * run_read(void *args){
-	unsigned int k,j, id, size=0, *ll;
+	unsigned int k,j, id, size_r=0, *ll;
 	unsigned int arr[size/4];
 	id = __sync_fetch_and_add(&rd_id, 1);
 	//printf("[%u]RD: START\n", id);

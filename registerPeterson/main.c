@@ -73,7 +73,7 @@ void * run_write(void *args){
 }
 
 void * run_read(void *args){
-	unsigned int k,j, id, size=0, *ll;
+	unsigned int k,j, id,size_r=0, *ll;
 	unsigned int arr[size/4];
 	id = reader_init(reg);
 	//printf("[%u]RD: START\n", id);
@@ -84,7 +84,7 @@ void * run_read(void *args){
 
 	while(!end || (end_read!=0 && count_read[id] >= end_read)){
 		//read
-		ll=reg_read(reg, id, &size);
+		ll=reg_read(reg, id, &size_r);
 		//carico
 		if(load>0){
 			for(j=0; j<size/4; j++) 

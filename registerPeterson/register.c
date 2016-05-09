@@ -15,6 +15,8 @@ struct wf_register {
 	void **copybuff;	// curcular buffer of register slot to use for the current value
 	void *BUFF1;
 	void *BUFF2;
+	void **buf1_loc;	// curcular buffer of register slot to use for the current value
+	void **buf2_loc;	// curcular buffer of register slot to use for the current value
 	
 	unsigned int size_slot;			// size of the register. Only for fixed size
 	unsigned int writers;			// max number of concurrent writers, fixed in the init
@@ -70,8 +72,16 @@ struct wf_register *_reg_init(unsigned int n_wrts, unsigned int n_rdrs, unsigned
 		printf("malloc failed\n");
         abort();
 	}
+	if((reg->buf1_loc = malloc(sizeof(void*) * n_rdrs))==NULL){
+		printf("malloc failed\n");
+        abort();
+	}
+	if((reg->buf2_loc = malloc(sizeof(void*) * n_rdrs))==NULL){
+		printf("malloc failed\n");
+        abort();
+	}
 	for(i=0;i<n_rdrs;i++){
-		 	if((reg->copybuff[i] = malloc(size))==NULL){
+		 	if((reg->copybuff[i] = malloc(size))==NULL || (reg->buf1_loc[i] = malloc(size))==NULL || (reg->buf2_loc[i] = malloc(size))==NULL){
 				printf("malloc failed\n");
 				abort();
 			}		
@@ -106,32 +116,32 @@ void *_reg_write(struct wf_register *reg, void *val, unsigned int size){
 
 void *reg_read(struct wf_register *reg, unsigned int id, unsigned int *size){
 	bool flag1, sw1, flag2, sw2;
-	void *buf1, *buf2;
+	//void *buf1, *buf2;
 	
-	buf1=malloc(reg->size_slot);
-	buf2=malloc(reg->size_slot);
+	//buf1=malloc(reg->size_slot);
+	//buf2=malloc(reg->size_slot);
 	
 	reg->reading[id]= (!reg->writing[id]);
 	
 	flag1 = reg->wflag;
 	sw1 = reg->switc;
-	memcpy(buf1, reg->BUFF1, reg->size_slot);
+	memcpy(reg->buf1_loc[id], reg->BUFF1, reg->size_slot);
 	flag2 = reg->wflag;
 	sw2 = reg->switc;
-	memcpy(buf2, reg->BUFF2, reg->size_slot);
+	memcpy(reg->buf2_loc[id], reg->BUFF2, reg->size_slot);
 	
 	if(reg->reading[id] == reg->writing[id]){
-		free(buf1);
-		free(buf2);
+		//free(buf1);
+		//free(buf2);
 		return reg->copybuff[id];
 	}
 	else if((sw1 != sw2) || flag1 || flag2){
-		free(buf1);
-		return buf2;
+		//free(buf1);
+		return reg->buf2_loc[id];
 	}
 	else{
-		free(buf2);
-		return buf1;
+		//free(buf2);
+		return reg->buf1_loc[id];
 	}
 }
 

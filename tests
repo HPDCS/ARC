@@ -18,7 +18,7 @@ SZ_list="4096 8192 16384 32768 65536 131072"
 LD_list_RD="0 1"
 LD_list_WR="0 1"
 BSY_WR_list="0 10"
-time = "10"
+TM = 1
 
 
 cd registerHPDCS
@@ -32,10 +32,11 @@ do
 	for LD_WR in $LD_list_WR
 	do
 		for SZ in $SZ_list
-		do 
+		do
 			for RD in $RD_list
-			do 
-				./registerHPDCS/test 1 $RD $SZ 0 0 $time $LD_WR $LD_RD>> ./results/HPDCS-LD_WR=${LD_WR}_LD_RD=${LD_RD}.dat
+			do
+				echo arc  1 $RD $SZ 0 0 10 $LD_WR $LD_RD
+				./registerHPDCS/test 1 $RD $SZ 0 0 10 $LD_WR $LD_RD>> ./results/HPDCS-LD_WR=${LD_WR}_LD_RD=${LD_RD}.dat
 			done
 		done
 	done
@@ -54,8 +55,9 @@ do
 		for SZ in $SZ_list
 		do 
 			for RD in $RD_list
-			do 
-				./registerLarsson/test 1 $RD $SZ 0 0 $time $LD_WR $LD_RD>> ./results/LARSSON-LD_WR=${LD_WR}_LD_RD=${LD_RD}.dat
+			do
+				echo lars 1 $RD $SZ 0 0 10 $LD_WR $LD_RD
+				./registerLarsson/test 1 $RD $SZ 0 0 10 $LD_WR $LD_RD>> ./results/LARSSON-LD_WR=${LD_WR}_LD_RD=${LD_RD}.dat
 			done
 		done
 	done
@@ -76,7 +78,8 @@ do
 		do 
 			for RD in $RD_list
 			do 
-				./registerPeterson/test 1 $RD $SZ 0 0 $time $LD_WR $LD_RD>> ./results/PETERSON-LD_WR=${LD_WR}_LD_RD=${LD_RD}.dat
+				echo ptsn 1 $RD $SZ 0 0 10 $LD_WR $LD_RD
+				./registerPeterson/test 1 $RD $SZ 0 0 10 $LD_WR $LD_RD>> ./results/PETERSON-LD_WR=${LD_WR}_LD_RD=${LD_RD}.dat
 			done
 		done
 	done
@@ -97,7 +100,8 @@ do
 		do 
 			for RD in $RD_list
 			do 
-				./registerLock/test 1 $RD $SZ 0 0 $time $LD_WR $LD_RD>> ./results/LOCK-LD_WR=${LD_WR}_LD_RD=${LD_RD}.dat
+				echo lock 1 $RD $SZ 0 0 10 $LD_WR $LD_RD
+				./registerLock/test 1 $RD $SZ 0 0 10 $LD_WR $LD_RD>> ./results/LOCK-LD_WR=${LD_WR}_LD_RD=${LD_RD}.dat
 			done
 		done
 	done

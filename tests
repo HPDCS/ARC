@@ -13,9 +13,13 @@ ScNm="$(echo $0|sed "s/.*\///")"
 ofn="./log_files/${ScNm}_$(date +%Y%m%d).log"
 
 
-RD_list="1 2 3 7 15 23 31"
+RD_list="1 2 3 7 11 15 19 23 27 31"
 SZ_list="4096 8192 16384 32768 65536 131072"
-LD_list="0 1"
+LD_list_RD="0 1"
+LD_list_WR="0 1"
+BSY_WR_list="0 10"
+time = "10"
+
 
 cd registerHPDCS
 make clean
@@ -23,18 +27,19 @@ make
 cd ..
 
 echo "starting test on registerHPDCS"
-
-for LD in $LD_list
+for LD_RD in $LD_list_RD
 do
-	for SZ in $SZ_list
-	do 
-		for RD in $RD_list
+	for LD_WR in $LD_list_WR
+	do
+		for SZ in $SZ_list
 		do 
-			./registerHPDCS/test 1 $RD $SZ 0 0 10 $LD>> ./results/HPDCS_LD=${LD}.dat
-  		done
+			for RD in $RD_list
+			do 
+				./registerHPDCS/test 1 $RD $SZ 0 0 $time $LD_WR $LD_RD>> ./results/HPDCS-LD_WR=${LD_WR}_LD_RD=${LD_RD}.dat
+			done
+		done
 	done
 done
-
 cd registerLarsson
 make clean
 make
@@ -42,14 +47,17 @@ cd ..
 
 echo "starting test on registerLarsson"
 
-for LD in $LD_list
+for LD_RD in $LD_list_RD
 do
-	for SZ in $SZ_list
-	do 
-		for RD in $RD_list
+	for LD_WR in $LD_list_WR
+	do
+		for SZ in $SZ_list
 		do 
-			./registerLarsson/test 1 $RD $SZ 0 0 10 $LD>> ./results/LARSSON_LD=${LD}.dat
-  		done
+			for RD in $RD_list
+			do 
+				./registerLarsson/test 1 $RD $SZ 0 0 $time $LD_WR $LD_RD>> ./results/LARSSON-LD_WR=${LD_WR}_LD_RD=${LD_RD}.dat
+			done
+		done
 	done
 done
 
@@ -60,14 +68,17 @@ cd ..
 
 echo "starting test on registerPeterson"
 
-for LD in $LD_list
+for LD_RD in $LD_list_RD
 do
-	for SZ in $SZ_list
-	do 
-		for RD in $RD_list
+	for LD_WR in $LD_list_WR
+	do
+		for SZ in $SZ_list
 		do 
-			./registerPeterson/test 1 $RD $SZ 0 0 10 $LD>> ./results/PETERSON_LD=${LD}.dat
-  		done
+			for RD in $RD_list
+			do 
+				./registerPeterson/test 1 $RD $SZ 0 0 $time $LD_WR $LD_RD>> ./results/PETERSON-LD_WR=${LD_WR}_LD_RD=${LD_RD}.dat
+			done
+		done
 	done
 done
 
@@ -78,14 +89,17 @@ cd ..
 
 echo "starting test on registerLock"
 
-for LD in $LD_list
+for LD_RD in $LD_list_RD
 do
-	for SZ in $SZ_list
-	do 
-		for RD in $RD_list
+	for LD_WR in $LD_list_WR
+	do
+		for SZ in $SZ_list
 		do 
-			./registerLock/test 1 $RD $SZ 0 0 10 $LD>> ./results/LOCK_LD=${LD}.dat
-  		done
+			for RD in $RD_list
+			do 
+				./registerLock/test 1 $RD $SZ 0 0 $time $LD_WR $LD_RD>> ./results/LOCK-LD_WR=${LD_WR}_LD_RD=${LD_RD}.dat
+			done
+		done
 	done
 done
 

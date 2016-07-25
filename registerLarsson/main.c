@@ -115,14 +115,14 @@ int main(int argn, char *argv[]) {
     readers = atoi(argv[2]);
     size = atoi(argv[3]);
     
-    if(argn == 8){
+    if(argn == 9){
 		busy_write = atoi(argv[4]);
 		busy_read = atoi(argv[5]);
 		duration = atoi(argv[6]);
 		load_writer = atoi(argv[7]);
 		load_reader = atoi(argv[8]);
 	}
-	else if (argn == 9){
+	else if (argn == 10){
 		busy_write = atoi(argv[4]);
 		busy_read = atoi(argv[5]);		
 		end_write = atoi(argv[6]);

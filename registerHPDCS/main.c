@@ -16,7 +16,7 @@
 
 struct wf_register *reg;
 unsigned long long val = 1;
-unsigned int busy_write=0, busy_read=0,  end_write=0, end_read=0, size=0, count_write=0, duration=0, rd_id = 0, load = 0;
+unsigned int busy_write=0, busy_read=0,  end_write=0, end_read=0, size=0, count_write=0, duration=0, rd_id = 0,  load_reader=0, load_writer=0;
 unsigned int *count_read;
 bool start = false, end = false;
 
@@ -60,7 +60,7 @@ void *run_write(void *args){
 	
 	while(!end || (end_write!=0 && count_write >= end_write)){
 		//carico
-		if(load>0){
+		if(load_writer>0){
 			for(j=0; j<size/4; j++) 
 				arr[j]++;
 		}
@@ -96,7 +96,7 @@ void *run_read(void *args){
 		//read
 		ll=reg_read(rd_slt);
 		//carico
-		if(load>0){
+		if(load_reader>0){
 			for(j=0; j<size/4; j++) 
 				arr[j]=ll[j];
 		}
@@ -130,14 +130,16 @@ int main(int argn, char *argv[]) {
 		busy_write = atoi(argv[4]);
 		busy_read = atoi(argv[5]);
 		duration = atoi(argv[6]);
-		load = atoi(argv[7]);
+		load_writer = atoi(argv[7]);
+		load_reader = atoi(argv[8]);
 	}
 	else if (argn == 9){
 		busy_write = atoi(argv[4]);
 		busy_read = atoi(argv[5]);		
 		end_write = atoi(argv[6]);
 		end_read = atoi(argv[7]);
-		load = atoi(argv[8]);
+		load_writer = atoi(argv[8]);
+		load_reader = atoi(argv[9]);
 	}
     
     pthread_t p_tid[writers + readers];    

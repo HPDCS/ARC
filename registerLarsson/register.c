@@ -148,7 +148,7 @@ void *_reg_write(struct wf_register *reg, void *val, unsigned int size){
 */
 void *reg_read(struct wf_register *reg, unsigned int id, unsigned int *size){
 	unsigned long long readerbit, rsync, rptr, id_abs;
-	void *mem_loc, *mem_ret;
+	void *mem_loc;// *mem_ret;
 	
 	id_abs = (id + PTRFIELDLEN);
 	readerbit = 1LL << id_abs;
@@ -159,6 +159,7 @@ void *reg_read(struct wf_register *reg, unsigned int id, unsigned int *size){
 		printf("malloc failed\n");
         abort();
 	}
+	*/
 	/* read from the memory location */
 	mem_loc = reg->rw_space[rptr].value_loc;
 	/*

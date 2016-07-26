@@ -18,6 +18,32 @@ unsigned int busy_write=0, busy_read=0, end_write=0, end_read=0, size=0, count_w
 unsigned int *count_read;
 bool end = false, start = false;
 
+int _memcmp(const void *s1, const void *s2, size_t n) {
+    unsigned char u1, u2;
+
+    for ( ; n-- ; s1++, s2++) {
+		u1 = * (unsigned char *) s1;
+		u2 = * (unsigned char *) s2;
+		if ( u1 != u2) {
+			return (u1-u2);
+		}
+    }
+    return 0;
+}
+
+static char *rand_string(char *str, size_t size) {
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    if (size) {
+        --size;
+        for (size_t n = 0; n < size; n++) {
+            int key = rand() % (int) (sizeof charset - 1);
+            str[n] = charset[key];
+        }
+        str[size] = '\0';
+    }
+    return str;
+}
+
 void printBits(size_t const size, void const * const ptr)
 {
     unsigned char *b = (unsigned char*) ptr;
@@ -44,62 +70,50 @@ int busy_loop(unsigned int count){
 	return k;
 }
 
-void * run_write(void *args){
-	unsigned int arr[size/4];
-	unsigned int j=0, k;
-	struct writer_slot *wr_slt;
-	
-	//printf("[0]WR: START\n");
-	
+void *run_write(void *args){
+	char arr[size];
+
 	while(!start);
 	
 	while(!end || (end_write!=0 && count_write >= end_write)){
 		//carico
 		if(load_writer>0){
-			for(j=0; j<size/4; j++) 
-				arr[j]++;
+			rand_string((char *)arr, size);
 		}
 		//write		
 		reg_write(reg, arr, size);
 		//busy loops
-		k = busy_loop(busy_write);
+		if(busy_write){
+			usleep(busy_write);
+		}
 		
 		count_write++;
-		//if((count_write%(end_write/10)) == 0) printf("WR: Iteration %10u\n",count_write);
 	}
-	//printf("[0]WR: END\n");
 	
 	pthread_exit(NULL);
 }
 
-void * run_read(void *args){
-	unsigned int k,j, id,size_r=0, *ll;
-	unsigned int arr[size/4];
+void *run_read(void *args){
+	unsigned int id,size_r=0, *ll;
 	id = reader_init(reg);
-	//printf("[%u]RD: START\n", id);
 	
-	//sleep(1);
-
-	//while(!start);
+	while(!start);
 
 	while(!end || (end_read!=0 && count_read[id] >= end_read)){
 		//read
 		ll=reg_read(reg, id, &size_r);
 		//carico
 		if(load_reader>0){
-			for(j=0; j<size/4; j++) 
-				arr[j]=ll[j];
+			_memcmp(ll, ll, size);
 		}
 		//busy loops
-		k = busy_loop(busy_read);
+		if(busy_read) 
+			usleep(busy_read);
 		
 		count_read[id]++;
-		//if((count_read[id]%(end_read/5)) == 0) printf("[%u]RD: Iteration %10u\n",id,count_read[id]);
 	}
-	//printf("[%u]RD: %u read operations performed\n", id,count_read[id]);
 	
 	pthread_exit(NULL);
-
 }
 
 int main(int argn, char *argv[]) {

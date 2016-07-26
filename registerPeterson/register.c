@@ -10,6 +10,8 @@
 #define PTRFIELDLEN 6LL
 #define PTRFIELD 0X000000000000003fLL
 
+#define fence()	__asm__ __volatile__ ("mfence" ::: "memory");
+
 
 struct wf_register {
 	void **copybuff;	// curcular buffer of register slot to use for the current value
@@ -100,14 +102,18 @@ void *_reg_write(struct wf_register *reg, void *val, unsigned int size){
 	unsigned int i;
 		
 	reg->wflag = true;
+	fence();
 	memcpy(reg->BUFF1, val, reg->size_slot);
 	reg->switc = (!reg->switc);
+	fence();
 	reg->wflag = false;
+	fence();
 	
 	for(i = 0 ; i < reg->readers ; i++){
 		if(reg->reading[i] != reg->writing[i]){
 			memcpy(reg->copybuff[i], val, reg->size_slot);
 			reg->writing[i] = reg->reading[i];
+			fence();
 		}
 	}
 	memcpy(reg->BUFF2, val, reg->size_slot);
@@ -117,14 +123,17 @@ void *_reg_write(struct wf_register *reg, void *val, unsigned int size){
 void *reg_read(struct wf_register *reg, unsigned int id, unsigned int *size){
 	bool flag1, sw1, flag2, sw2;
 	
-	reg->reading[id]= (!reg->writing[id]);
+	reg->reading[id] = (!reg->writing[id]);
+	fence();
 	
 	flag1 = reg->wflag;
 	sw1 = reg->switc;
 	memcpy(reg->buf1_loc[id], reg->BUFF1, reg->size_slot);
+	fence();
 	flag2 = reg->wflag;
 	sw2 = reg->switc;
 	memcpy(reg->buf2_loc[id], reg->BUFF2, reg->size_slot);
+	fence();
 	
 	if(reg->reading[id] == reg->writing[id]){
 		return reg->copybuff[id];

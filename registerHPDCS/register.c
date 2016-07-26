@@ -108,9 +108,10 @@ struct wf_register *_reg_init(unsigned int n_wrts, unsigned int n_rdrs, unsigned
 */
 struct reader_slot *reader_init(struct wf_register *reg){
 	struct reader_slot *rd_slt;
-	unsigned int id;
+	/*
+	unsigned int id = 0;
 	
-	id = __sync_fetch_and_add(&(reg->readers_registered),1);/*
+	id = __sync_fetch_and_add(&(reg->readers_registered),1);
 	if(id >= reg->readers){
 		__sync_fetch_and_add(&(reg->readers_registered),-1);
 		return NULL;
@@ -139,9 +140,9 @@ struct reader_slot *reader_init(struct wf_register *reg){
 */
 struct writer_slot *writer_init(struct wf_register *reg){
 	struct writer_slot *wr_slt;
-	unsigned int id;
+	/*unsigned int id;
 		
-	id = __sync_fetch_and_add(&(reg->writers_registered),1);/*
+	id = __sync_fetch_and_add(&(reg->writers_registered),1);
 	if(id >= reg->writers){
 		__sync_fetch_and_add(&(reg->writers_registered),-1);
 		return NULL;//return ~0;//id = 0;
@@ -167,7 +168,7 @@ struct writer_slot *writer_init(struct wf_register *reg){
 * @note If is used a size!=0 with a fixed size register, the size parameter is ignored
 */
 void *_reg_write(struct writer_slot *wr_slt, void *val, unsigned int size){
-	unsigned int size_slot;
+	//unsigned int size_slot;
 	unsigned long long current_tmp, current_index, i,da_cancellare;
 	struct wf_register * reg;
 	

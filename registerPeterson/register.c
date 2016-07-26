@@ -117,6 +117,7 @@ void *_reg_write(struct wf_register *reg, void *val, unsigned int size){
 		}
 	}
 	memcpy(reg->BUFF2, val, reg->size_slot);
+	return reg->BUFF1;
 }
 
 

@@ -34,10 +34,11 @@ int _memcmp(const void *s1, const void *s2, size_t n) {
 }
 
 static char *rand_string(char *str, size_t size) {
+    size_t n;
     const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     if (size) {
         --size;
-        for (size_t n = 0; n < size; n++) {
+        for (n = 0; n < size; n++) {
             int key = rand() % (int) (sizeof charset - 1);
             str[n] = charset[key];
         }
@@ -197,4 +198,5 @@ int main(int argn, char *argv[]) {
 	printf("+===================================================================================O\n\n\n");
 	
 	reg_free(reg);
+	return 0;
 }

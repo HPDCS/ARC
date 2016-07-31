@@ -12,7 +12,6 @@
 #include "rapl.h"
 #include "cpuid.h"
 #include "msr.h"
-
 #include "register.h"
 
 #define DIM 1
@@ -199,8 +198,9 @@ int main(int argn, char *argv[]) {
 	for(i = 0; i < readers; i++)  tot_count_read +=count_read[i];
 	printf("TOTAL READ: %u\n", tot_count_read);
 	printf("TOTAL OPER: %u\n", tot_count_read+count_write);
+	endEnergy();
 	printf("+===================================================================================O\n\n\n");
-	startEnergy();
+	
 	reg_free(reg);
 	return 0;
 }

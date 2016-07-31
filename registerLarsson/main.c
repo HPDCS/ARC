@@ -9,7 +9,9 @@
 #include <math.h>
 
 #include "timer.h"
-
+#include "rapl.h"
+#include "cpuid.h"
+#include "msr.h"
 #include "register.h"
 
 struct wf_register *reg;
@@ -169,9 +171,11 @@ int main(int argn, char *argv[]) {
     }
     
 	sleep(1);
+	
+	startEnergy();
 	printf("\n\n+-----------------------------------------------------------------------------------+\n");
 	printf("START TEST on REGISTER(%u,%u) of size %u for %u seconds:\n\n", writers, readers, size, duration);
-
+	
 	timer_start(exec_time);
 	start = true;
 	if(duration > 0){
@@ -187,6 +191,7 @@ int main(int argn, char *argv[]) {
 	for(i = 0; i < readers; i++)  tot_count_read +=count_read[i];
 	printf("TOTAL READ: %u\n", tot_count_read);
 	printf("TOTAL OPER: %u\n", tot_count_read+count_write);
+	endEnergy();
 	printf("+-----------------------------------------------------------------------------------+\n\n\n");
 	
     reg_free(reg);

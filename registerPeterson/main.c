@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+#include <sched.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,9 +16,26 @@
 
 struct wf_register *reg;
 unsigned long long val = 1;
-unsigned int busy_write=0, busy_read=0, end_write=0, end_read=0, size=0, count_write=0, duration=0,  load_reader=0, load_writer=0;
+unsigned int readers=0, writers=0, busy_write=0, busy_read=0, end_write=0, end_read=0, size=0, count_write=0, duration=0,  load_reader=0, load_writer=0;
 unsigned int *count_read;
 bool end = false, start = false;
+
+void set_affinity(unsigned int tid){
+	unsigned int id_cpu;
+	cpu_set_t mask;	
+	//unsigned int cpus[] = { 0,4, 8,12,16,20,24,28,1,5, 9,13,17,21,25,29,2,6,10,14,18,22,26,30,3,7,11,15,19,23,27,31}; 
+	//id_cpu = cpus[tid];						
+	id_cpu = (tid % 8) * 4 + (tid/((unsigned int)8));
+	
+	printf("Thread %u set to CPU no %u\n", tid, id_cpu);
+	CPU_ZERO(&mask);
+	CPU_SET(id_cpu, &mask);
+	int err = sched_setaffinity(0, sizeof(cpu_set_t), &mask);
+	if(err < 0) {
+		printf("Unable to set CPU affinity: %s\n", strerror(errno));
+		exit(-1);
+	}
+}
 
 int _memcmp(const void *s1, const void *s2, size_t n) {
     unsigned char u1, u2;
@@ -73,6 +92,8 @@ int busy_loop(unsigned int count){
 
 void *run_write(void *args){
 	char arr[size];
+	
+	set_affinity(readers);
 
 	while(!start);
 	
@@ -97,6 +118,7 @@ void *run_write(void *args){
 void *run_read(void *args){
 	unsigned int id,size_r=0, *ll;
 	id = reader_init(reg);
+	set_affinity(id);
 	
 	while(!start);
 
@@ -118,7 +140,7 @@ void *run_read(void *args){
 }
 
 int main(int argn, char *argv[]) {
-	unsigned int i, ret, readers, writers, tot_count_read=0;
+	unsigned int i, ret, tot_count_read=0;
     timer exec_time;
 
     if(argn < 8) {

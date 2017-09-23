@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+#include <sched.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -16,9 +18,28 @@
 
 struct wf_register *reg;
 unsigned long long val = 1;
-unsigned int busy_write=0, busy_read=0,  end_write=0, end_read=0, size=0, count_write=0, duration=0, rd_id = 0,  load_reader=0, load_writer=0;
+unsigned int readers=0, writers=0, busy_write=0, busy_read=0, 
+			end_write=0, end_read=0, size=0, count_write=0, 
+			duration=0,	rd_id=0,  load_reader=0, load_writer=0;
 unsigned int *count_read;
 bool start = false, end = false;
+
+void set_affinity(unsigned int tid){
+	unsigned int id_cpu;
+	cpu_set_t mask;	
+	//unsigned int cpus[] = { 0,4, 8,12,16,20,24,28,1,5, 9,13,17,21,25,29,2,6,10,14,18,22,26,30,3,7,11,15,19,23,27,31}; 
+	//id_cpu = cpus[tid];						
+	id_cpu = (tid % 8) * 4 + (tid/((unsigned int)8));
+	
+	printf("Thread %u set to CPU no %u\n", tid, id_cpu);
+	CPU_ZERO(&mask);
+	CPU_SET(id_cpu, &mask);
+	int err = sched_setaffinity(0, sizeof(cpu_set_t), &mask);
+	if(err < 0) {
+		printf("Unable to set CPU affinity: %s\n", strerror(errno));
+		exit(-1);
+	}
+}
 
 int _memcmp(const void *s1, const void *s2, size_t n) {
     unsigned char u1, u2;
@@ -76,6 +97,7 @@ void *run_write(void *args){
 	char arr[size];
 	struct writer_slot *wr_slt;
 	
+	set_affinity(readers);
 	wr_slt = writer_init(reg);
 
 	while(!start);
@@ -103,8 +125,9 @@ void *run_read(void *args){
 	unsigned int id, *ll;
 	struct reader_slot *rd_slt;
 	
-	rd_slt= reader_init(reg);
 	id = __sync_fetch_and_add(&rd_id, 1);
+	set_affinity(id);
+	rd_slt= reader_init(reg);	
 
 	while(!start);
 
@@ -126,11 +149,11 @@ void *run_read(void *args){
 }
 
 int main(int argn, char *argv[]) {
-	unsigned int i, ret, readers, writers, tot_count_read = 0;
+	unsigned int i, ret, tot_count_read = 0;
     timer exec_time;
 
     if(argn < 8) {
-        fprintf(stderr, "Usage: %s: n_writer n_reader end_write end_read busy_write busy_read size\n", argv[0]);
+        fprintf(stderr, "Usage: %s: n_writer n_reader size busy_write busy_read time load_write load_read\n", argv[0]);
         exit(EXIT_FAILURE);
     }
       

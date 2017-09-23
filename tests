@@ -11,10 +11,11 @@ ScNm="$(echo $0|sed "s/.*\///")"
 ofn="./log_files/${ScNm}_$(date +%Y%m%d).log"
 
 RD_list="1 2 3 7 11 15 19 23 27 31"
-SZ_list="4096 8192 16384 32768 65536 131072"
+SZ_list="256 1024 4096 32768 131072" #"4096 8192 16384 32768 65536 131072"
 LD_list_RD="0 1"
 LD_list_WR="0 1"
 BSY_WR_list="0 500"
+RUN_list="0 1 2 3"
 
 cd registerHPDCS
 make clean
@@ -36,6 +37,8 @@ cd ..
 echo
 echo "STARTING TESTS				 $(date)"
 echo
+for RUN in RUN_list
+do
 for BSY_WR in $BSY_WR_list
 do
 	for LD_RD in $LD_list_RD
@@ -49,15 +52,15 @@ do
 				for RD in $RD_list
 				do
 					echo "		readers=$RD	size=$SZ	busy_writer=${BSY_WR}	load_writer=$LD_WR	load_reader=$LD_RD		$(date +%X)"
-					./registerHPDCS/test 1 $RD $SZ $BSY_WR 0 10 $LD_WR $LD_RD >> 	./results/ARC-BSY_WR=${BSY_WR}-LD_WR=${LD_WR}-LD_RD=${LD_RD}.dat
-					./registerLarsson/test 1 $RD $SZ $BSY_WR 0 10 $LD_WR $LD_RD >> 	./results/LAR-BSY_WR=${BSY_WR}-LD_WR=${LD_WR}-LD_RD=${LD_RD}.dat
-					./registerPeterson/test 1 $RD $SZ $BSY_WR 0 10 $LD_WR $LD_RD >> ./results/PET-BSY_WR=${BSY_WR}-LD_WR=${LD_WR}-LD_RD=${LD_RD}.dat
-					./registerLock/test 1 $RD $SZ $BSY_WR 0 10 $LD_WR $LD_RD >> 	./results/LOC-BSY_WR=${BSY_WR}-LD_WR=${LD_WR}-LD_RD=${LD_RD}.dat
+					./registerHPDCS/test 1 $RD $SZ $BSY_WR 0 10 $LD_WR $LD_RD >> 	./results/ARC-BSY_WR=${BSY_WR}-LD_WR=${LD_WR}-LD_RD=${LD_RD}_${RUN}.dat
+					./registerLarsson/test 1 $RD $SZ $BSY_WR 0 10 $LD_WR $LD_RD >> 	./results/LAR-BSY_WR=${BSY_WR}-LD_WR=${LD_WR}-LD_RD=${LD_RD}_${RUN}.dat
+					./registerPeterson/test 1 $RD $SZ $BSY_WR 0 10 $LD_WR $LD_RD >> ./results/PET-BSY_WR=${BSY_WR}-LD_WR=${LD_WR}-LD_RD=${LD_RD}_${RUN}.dat
+					./registerLock/test 1 $RD $SZ $BSY_WR 0 10 $LD_WR $LD_RD >> 	./results/LOC-BSY_WR=${BSY_WR}-LD_WR=${LD_WR}-LD_RD=${LD_RD}_${RUN}.dat
 				done
 			done
 		done
 	done
 done
-
+done
 
 

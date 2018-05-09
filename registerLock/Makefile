@@ -1,5 +1,6 @@
 CC=gcc
-FLAGS=-g -Wall -pthread -lm #a parte g, non so cosa siano
+FLAGS=-g -Wall -pthread -lm
+FLAGS:=$(FLAGS) -DCACHE_LINE_SIZE=$(shell getconf LEVEL1_DCACHE_LINESIZE) -DN_CPU=$(shell grep -c ^processor /proc/cpuinfo)
 #INCLUDE= -I include/ -I mm/ -I core/ -Istatistics/
 #LIBS=-pthread -lm
 EXECUTABLE=test

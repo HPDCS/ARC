@@ -10,21 +10,19 @@
 #define NRRD_LENG 32
 #define EMPTY 0XffffffffffffffffLL
 
-#define CACHE_LINE_SIZE 64
+//#define CACHE_LINE_SIZE 64
 
 struct wf_register {
 	unsigned long long current; 		// composed by [32 bit of index ||32 bit of counter] 
-	struct register_slot *rw_space;		// curcular buffer of register slot to use for the current value
-	unsigned int size_slot;				// size of the register. Only for fixed size
+	struct register_slot *rw_space;		// circular buffer of register slot to use for the current value
 	unsigned int writers;				// max number of concurrent writers, fixed in the init
 	unsigned int readers;				// max number of concurrent readers, fixed in the init
 	unsigned int writers_registered;	// number of writers registered
 	unsigned int readers_registered;	// number of readers registered
-	char pad[36]; //<- per evitare che gli aggiornamenti atomici del current blocchino 
+	char pad[32]; //<- per evitare che gli aggiornamenti atomici del current blocchino 
 	unsigned long long next_free_slot;	// next slot to use
-	
-	
 	unsigned char *slots_status;
+	unsigned int size_slot;				// size of the register. Only for fixed size
 };
 
 struct register_slot {	//32 = 20+12 BYTE...
@@ -48,6 +46,7 @@ struct writer_slot{
 	//unsigned int id;					// ID associated to the writer in the init phase
 	struct wf_register *parent;			// address of the struct of the referred register
 	struct register_slot *rw_space;		// curcular buffer of register slot to use for the current value
+	unsigned int last_current;
 };
 
 void print_snapshot(struct wf_register *reg){
@@ -91,7 +90,8 @@ struct wf_register *_reg_init(unsigned int n_wrts, unsigned int n_rdrs, unsigned
 		printf("malloc failed\n");
         abort();
 	}
-	if((reg->slots_status = malloc((reg->readers+2)*sizeof(unsigned char)))==NULL){
+	//if((reg->slots_status = malloc((reg->readers+2)*sizeof(unsigned char)))==NULL){
+	if((posix_memalign((void**)&(reg->slots_status), CACHE_LINE_SIZE, (reg->readers+2)*sizeof(unsigned char)))!=0){
 		printf("malloc failed\n");
         abort();
 	}
@@ -135,8 +135,8 @@ struct reader_slot *reader_init(struct wf_register *reg){
 		__sync_fetch_and_add(&(reg->readers_registered),-1);
 		return NULL;
 	}*/
-		
-	if((rd_slt = malloc(sizeof(struct reader_slot)))==NULL){
+	if((posix_memalign((void**)&(rd_slt), CACHE_LINE_SIZE, sizeof(struct reader_slot)))!=0){
+	//if((rd_slt = malloc(sizeof(struct reader_slot)))==NULL){
 		printf("malloc failed\n");
         abort();
 	}
@@ -168,7 +168,8 @@ struct writer_slot *writer_init(struct wf_register *reg){
 		return NULL;//return ~0;//id = 0;
 	}*/
 	
-	if((wr_slt = malloc(sizeof(struct writer_slot)))==NULL){
+	if((posix_memalign((void**)&(wr_slt), CACHE_LINE_SIZE, sizeof(struct writer_slot)))!=0){
+	//if((wr_slt = malloc(sizeof(struct writer_slot)))==NULL){
 		printf("malloc failed\n");
         abort();
 	}
@@ -198,7 +199,7 @@ void *_reg_write(struct writer_slot *wr_slt, void *val, unsigned int size){
 	rw_space = wr_slt->rw_space;
 	readers = reg->readers;
 	
-	current_index = (reg->current) >> NRRD_LENG; //farla diventare locale al writer?
+	current_index = wr_slt->last_current;//(reg->current) >> NRRD_LENG; //farla diventare locale al writer?//NEW
 	if(reg->next_free_slot != EMPTY){
 		i = reg->next_free_slot;
 		reg->next_free_slot = EMPTY;//farla diventare un exchange?		
@@ -231,6 +232,7 @@ void *_reg_write(struct writer_slot *wr_slt, void *val, unsigned int size){
 	
 	/* prepare the new current swap it with the old one, making the new value visible*/
 	current_tmp = __sync_lock_test_and_set(&reg->current, (i << NRRD_LENG)/*+1*/);
+	wr_slt->last_current = i; //NEW
 	
 	/* update the r_started field in the old slot or free the memory used */
 	rw_space[current_index].r_started = (unsigned int)(current_tmp & NRRD_MASK);
@@ -243,7 +245,6 @@ void *_reg_write(struct writer_slot *wr_slt, void *val, unsigned int size){
 		__sync_lock_test_and_set(&reg->next_free_slot, current_index);
 	}
 	*/
-	
 	return rw_space[i].value_loc; //forse per correttezza poi sarà meglio toglierlo
 }
 

@@ -21,22 +21,28 @@ unsigned int *count_read;
 bool end = false, start = false;
 
 void set_affinity(unsigned int tid){
-	unsigned int id_cpu;
-	cpu_set_t mask;	
-	//unsigned int cpus[] = { 0,4, 8,12,16,20,24,28,1,5, 9,13,17,21,25,29,2,6,10,14,18,22,26,30,3,7,11,15,19,23,27,31}; 
-	//id_cpu = cpus[tid];						
-	id_cpu = (tid % 8) * 4 + (tid/((unsigned int)8));
-	
-	printf("Thread %u set to CPU no %u\n", tid, id_cpu);
+	unsigned int current_cpu;
+	cpu_set_t mask;
+
+	if(N_CPU == 32 || N_CPU == 24){
+		unsigned int thr_to_cpu[] = {	0,4, 8,12,	16,20,24,28,
+										1,5, 9,13,	17,21,25,29,
+										2,6,10,14,	18,22,26,30,
+										3,7,11,15,	19,23,27,31};
+		current_cpu = thr_to_cpu[tid];
+	}
+	else{
+		current_cpu = (tid % N_CPU);
+	}
+
 	CPU_ZERO(&mask);
-	CPU_SET(id_cpu, &mask);
-	int err = sched_setaffinity(0, sizeof(cpu_set_t), &mask);
-	if(err < 0) {
+	CPU_SET(current_cpu, &mask);
+
+	if(sched_setaffinity(0, sizeof(cpu_set_t), &mask) < 0) {
 		printf("Unable to set CPU affinity: %s\n", strerror(errno));
 		exit(-1);
 	}
 }
-
 int _memcmp(const void *s1, const void *s2, size_t n) {
     unsigned char u1, u2;
 
